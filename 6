@@ -1,0 +1,68 @@
+import requests
+from bs4 import BeautifulSoup
+import sqlite3
+
+url = "https://rozetka.com.ua/ua/promo/bigeastersale/?gad_source=1&gclid=Cj0KCQjw_qexBhCoARIsAFgBletFoQETCaGXiYBDCLWiKY_vWA4r2eddKMLYKdzUeHgk3H4r3SUM42QaAle-EALw_wcB"
+
+response = requests.get(url)
+soup = BeautifulSoup(response.text, "html.parser")
+
+products = soup.find_all("div", class_="goods-tile")
+
+conn = sqlite3.connect("rozetka_products.db")
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS products
+              (id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT,
+              price TEXT,
+              description TEXT)''')
+conn.commit()
+
+for product in products:
+    name = product.find("span", class_="goods-tile__title").text
+    price = product.find("span", class_="goods-tile__price-value").text
+    description_element = product.find("div", class_="goods-tile__description")
+    description = description_element.text if description_element else None
+    cursor.execute("INSERT INTO products (name, price, description) VALUES (?, ?, ?)", (name, price, description))
+    conn.commit()
+
+conn.close()
+
+print("Дані про товари успішно збережені у базі даних.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+
+conn = sqlite3.connect("rozetka_products.db")
+cursor = conn.cursor()
+
+cursor.execute("SELECT * FROM products")
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+conn.close()
